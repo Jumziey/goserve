@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"os"
 )
@@ -51,6 +52,11 @@ func main() {
 	flag.Parse()
 	var files []string
 
+	interfs, err := net.Interfaces()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	for _, v := range flag.Args() {
 		if fileExists(v) {
 			files = append(files, v)
@@ -59,8 +65,19 @@ func main() {
 			fmt.Println("Can't find the file: "+v, "\tSkipping...")
 		}
 	}
+
+	//Some info about what will be shared and on what adress
 	fmt.Print("Sharing: ")
 	fmt.Println(files)
+	fmt.Println("Available Ip's for this computer:")
+	for _, inter := range interfs {
+		if inter.Flags&net.FlagLoopback == 0 {
+			addr, _ := inter.Addrs()
+			for _, v := range addr {
+				fmt.Println("\t", inter.Name, "->", v)
+			}
+		}
+	}
 	fmt.Println("Server runs on port: ", *port)
 
 	fileIndex := createFileIndex(files)
